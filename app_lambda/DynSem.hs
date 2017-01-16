@@ -6,7 +6,7 @@ module DynSem (
 
 import Ast (Name, Term(..))
 import Redex (RedexT, runRedexT, reduce, term, (<|>))
-import Control.Monad.State (StateT, evalStateT, get, put)
+import Control.Monad.State (StateT, evalStateT, runStateT, get, put)
 
 import Data.Maybe (fromJust, isNothing)
 
@@ -14,9 +14,14 @@ type FreshName = Int
 
 type Lambda = RedexT Term (StateT FreshName Maybe)
 
+untilS :: (a -> StateT s Maybe a) -> a -> StateT s Maybe a
+untilS f t = do v <- get
+                case runStateT (f t) v of
+                  Nothing -> return t
+                  Just (t', v') -> put v' >> untilS f t'
+
 eval :: Term -> Term
-eval t = fromJust $ evalStateT (runRedexT redex t) 0
---eval = fromJust . evalStateT (until isNothing (runRedexT redex)) 0 . Just
+eval t = fromJust $ evalStateT (untilS (runRedexT redex) t) 0
 
 freein :: Name -> Term -> Bool
 x `freein` X y = x == y

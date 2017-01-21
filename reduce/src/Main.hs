@@ -1,7 +1,7 @@
 module Main where
 
-import Parser (term)
-import DynSem (eval)
+import Lambda.Parser (term)
+import Lambda.Semantics (eval)
 
 import Text.Parsec (parse)
 import System.IO (hFlush, stdout)

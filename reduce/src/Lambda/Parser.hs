@@ -1,8 +1,8 @@
-module Parser (
+module Lambda.Parser (
     term,
 ) where
 
-import Ast (Name, Term(..))
+import Lambda.Ast (Name, Term(..))
 
 import Text.Parsec (try, many1, skipMany1, chainl1, between, (<|>))
 import Text.Parsec.Char (char, space, lower)

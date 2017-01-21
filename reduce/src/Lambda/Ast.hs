@@ -1,4 +1,4 @@
-module Ast (
+module Lambda.Ast (
     Name,
     Term(..),
 ) where

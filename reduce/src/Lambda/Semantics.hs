@@ -1,10 +1,10 @@
 {-# LANGUAGE MonadComprehensions #-}
 
-module DynSem (
+module Lambda.Semantics (
     eval
 ) where
 
-import Ast (Name, Term(..))
+import Lambda.Ast (Name, Term(..))
 import Redex (RedexT, runRedexT, reduce, term, (<|>))
 import Control.Monad.State (StateT, evalStateT, get, put)
 import Control.Monad.Trans.Maybe (MaybeT, runMaybeT)

@@ -22,7 +22,7 @@ newtype RedexT a m b = RedexT { runRedexT :: a -> m b }
 term :: (Monad m) => RedexT a m a
 term = RedexT return
 
-reduce :: (Monad m) => RedexT a m b -> a -> RedexT a m b
+reduce :: (Monad m) => RedexT a m b -> a -> RedexT c m b
 reduce r a = RedexT $ \_ -> runRedexT r a
 
 instance (Functor m) => Functor (RedexT a m) where

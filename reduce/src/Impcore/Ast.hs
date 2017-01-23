@@ -19,10 +19,12 @@ data XDef = Def Def
 
 data UnitTest = CheckExpect Exp Exp
               | CheckError Exp
+              | Pass -- A sentinel for evaluation
 
 data Def = Val Name Exp
          | Exp Exp
          | Define Name [Name] Exp
+         | Done -- A sentinel for evaluation
 
 data Exp = Literal Value
          | Var Name

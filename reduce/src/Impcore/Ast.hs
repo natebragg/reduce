@@ -40,6 +40,7 @@ instance Show XDef where
     show (Def d) = show d
     show (Use x) = "(use " ++ x ++ ")"
     show (Test u) = show u
+    showList xds = (unlines (map show xds) ++)
 
 instance Show UnitTest where
     show (CheckExpect c e) = "(check-expect " ++ show c ++ " " ++ show e ++ ")"

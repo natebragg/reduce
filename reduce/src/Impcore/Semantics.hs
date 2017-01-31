@@ -23,7 +23,8 @@ import Data.List (nub)
 import Prelude hiding (exp)
 
 type Env a = [(Name, a)]
-type Fun = ([Name], Exp)
+data Fun = User ([Name], Exp)
+         | Prim (Value -> Value -> Value)
 
 type Impcore m a = RedexT a (MaybeT (StateT (Env Value, Env Fun, Env Value) m)) a
 
@@ -33,7 +34,12 @@ potred t = ContT $ \hook -> do
     maybe (return t) ((>>= flip runContT hook . potred) . hook) t'
 
 eval :: (Monad m) => [XDef] -> ([XDef] -> StateT (Env Value, Env Fun, Env Value) m [XDef]) -> m [XDef]
-eval t h = evalStateT (runContT (potred t) h) ([], [], [])
+eval t h = evalStateT (runContT (potred t) h) ([], basis, [])
+    where basis = [("-", Prim (-)), ("+", Prim (+)), ("*", Prim (*)), ("/", Prim div),
+                   ("=", Prim ((fromBool .) . (==))), ("<", Prim ((fromBool .) . (<))),
+                   (">", Prim ((fromBool .) . (>)))]
+          fromBool False = 0
+          fromBool True = 1
 
 replace :: (Eq a) => a -> b -> [(a, b)] -> Maybe [(a, b)]
 replace _ _ [] = Nothing
@@ -125,12 +131,15 @@ apply_v = do Apply x ls <-term
              (xi, phi, rho) <- get
              case lookup x phi of
                 Nothing -> mzero
-                Just (fs, e) -> do
+                Just (User (fs, e)) -> do
                     guard $ length fs == length vs
                     let rho' = zip fs vs
                     put (xi, phi, rho')
                     return e
                     --pop cached rho
+                Just (Prim f) -> do
+                    guard $ length vs == 2
+                    return $ Literal $ f (vs !! 0) (vs !! 1)
 
 apply :: (Monad m) => Impcore m Exp
 apply = apply_v <|> apply_e
@@ -181,7 +190,7 @@ define :: (Monad m) => Impcore m Def
 define = do Define x fs e <- term
             guard $ length fs == length (nub fs)
             (xi, phi, rho) <- get
-            put (xi, (x, (fs, e)):phi, rho)
+            put (xi, (x, User (fs, e)):phi, rho)
             return Done
 
 def :: (Monad m) => Impcore m Def

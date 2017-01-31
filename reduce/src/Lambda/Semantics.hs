@@ -16,7 +16,7 @@ type Lambda m = RedexT Term (MaybeT (StateT FreshName m))
 
 potred :: (Monad m) => Term -> ContT Term (StateT FreshName m) Term
 potred t = ContT $ \hook -> do
-    t' <- runMaybeT $ runRedexT redex t
+    t' <- runMaybeT $ runRedexT lambda t
     maybe (return t) ((>>= flip runContT hook . potred) . hook) t'
 
 eval :: (Monad m) => Term -> (Term -> StateT FreshName m Term) -> m Term
@@ -53,16 +53,16 @@ x_x :: (Monad m) => Lambda m Name
 x_x = [x | X x <- term]
 
 cong0 :: (Monad m) => Lambda m Term
-cong0 = App <$> app_1 <*> (app_2 >>= reduce redex)
+cong0 = App <$> app_1 <*> (app_2 >>= reduce lambda)
 
 cong1 :: (Monad m) => Lambda m Term
-cong1 = App <$> (app_1 >>= reduce redex) <*> app_2
+cong1 = App <$> (app_1 >>= reduce lambda) <*> app_2
 
 beta :: (Monad m) => Lambda m Term
 beta = [ t'' | App (Lam x v) t' <- term, t'' <- v `subst` x|->t']
 
 cong2 :: (Monad m) => Lambda m Term
-cong2 = Lam <$> lam_x <*> (lam_t >>= reduce redex)
+cong2 = Lam <$> lam_x <*> (lam_t >>= reduce lambda)
 
 eta :: (Monad m) => Lambda m Term
 eta = [ t' | Lam x_1 (App t' (X x_2)) <- term, x_1 == x_2, not $ x_1 `freein` t']
@@ -79,5 +79,5 @@ x_s |-> t_s =
   [ Lam x t'' | Lam x t' <- term, x /= x_s, not $ x `freein` t_s, t'' <- (t' `subst` x_s|->t_s)] <|>
   [ Lam x' t''' | Lam x t' <- term, x /= x_s, x `freein` t_s, Lam x' t'' <- reduce alpha $ Lam x t', t''' <- (t'' `subst` x_s|->t_s)]
 
-redex :: (Monad m) => Lambda m Term
-redex = eta <|> cong2 <|> beta <|> cong1 <|> cong0
+lambda :: (Monad m) => Lambda m Term
+lambda = eta <|> cong2 <|> beta <|> cong1 <|> cong0

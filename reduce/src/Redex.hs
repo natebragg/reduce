@@ -9,13 +9,37 @@ module Redex (
     (<|>),
     term,
     reduce,
+    (<==),
+    (</=),
+    (?>),
+    (!?>),
 ) where
 
 import Control.Applicative (Applicative(..), Alternative(..))
 import Control.Monad.Identity (Identity, runIdentity)
 import Control.Monad.Trans (MonadTrans(..))
 import Control.Monad.State (MonadState(..))
-import Control.Monad (MonadPlus(..))
+import Control.Monad (MonadPlus(..), guard)
+
+(<==) :: (Eq a, Applicative m) => m a -> a -> m Bool
+a <== b = (== b) <$> a
+
+infixl 6 <==
+
+(</=) :: (Eq a, Applicative m) => m a -> a -> m Bool
+a </= b = (/= b) <$> a
+
+infixl 6 </=
+
+(?>) :: (Monad m, Alternative m) => m Bool -> m a -> m a
+p ?> v = p >>= guard >> v
+
+infixl 4 ?>
+
+(!?>) :: (Monad m, Alternative m) => m Bool -> m a -> m a
+p !?> v = p >>= (guard . not) >> v
+
+infixl 4 !?>
 
 newtype RedexT a m b = RedexT { runRedexT :: a -> m b }
 

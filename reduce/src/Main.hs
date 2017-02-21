@@ -6,6 +6,8 @@ import qualified Lambda.Semantics as L (eval)
 import Impcore.Parser (imp)
 import qualified Impcore.Semantics as I (eval)
 
+import qualified Impcore.Interp as II (eval)
+
 import Text.Parsec (parse)
 import System.IO (hFlush, stdout, stdin, readFile)
 import System.Environment (getProgName, getArgs)
@@ -23,6 +25,7 @@ data Mode = NormalForm
 
 data Lang = Lambda
           | Impcore
+          | ImpcoreInterp
 
 usage :: IO ()
 usage = do n <- getProgName
@@ -55,6 +58,7 @@ main = do args <- getArgs
                     ["-s"] -> return (Step,       Lambda)
                     ["-i"] -> return (NormalForm, Impcore)
                     ["-d"] -> return (Step,       Impcore)
+                    ["-t"] -> return (NormalForm, ImpcoreInterp)
                     otherwise -> usage >> exitFailure
           case params of
                     [] -> return ()
@@ -69,6 +73,9 @@ main = do args <- getArgs
             case lang of
                 Impcore -> runParser (parse imp) I.eval I.eval mode inp
                 Lambda  -> runParser (parse term) L.eval L.eval mode inp
+                ImpcoreInterp -> case (parse imp) "" inp of
+                                   Left err -> putStrLn $ "error: " ++ show err
+                                   Right t -> print $ II.eval t
           runParser p eval eval2 mode inp =
             case p "" inp of
               Left err -> putStrLn $ "error: " ++ show err
